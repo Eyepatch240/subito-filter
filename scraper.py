@@ -102,9 +102,7 @@ def average(results_query):
         somma += oggetto.Prezzo
         i+=1
 
-    avg_price = somma / i
-
-    return avg_price
+    return somma / i
 
 # Funzione che filtra tutti gli oggetti fuori mercato, o non inerenti alla ricerca (annunci da 1 euro, accessori ecc.)
 def filter_results(results_query, avg_price):
@@ -130,11 +128,8 @@ def filter_by_price(results_query, price):
 # Funzione che gestisce la rilevanza a livello temporale degli annunci esaminati, chiamata da scrap_items_subito, ritorna Falso quando devono essere esaminati e raccolti, True quando devono essere saltati
 def data_handling(data_oggetto, data_max):
 
-    if 'Oggi' in data_oggetto:
-        return False
-    
-    if 'Ieri' in data_oggetto and data_max >= 1:
-        return False
+    if 'Oggi' in data_oggetto or ('Ieri' in data_oggetto and data_max >= 1):
+        return False 
     
     data_365 = 0
     
@@ -145,8 +140,7 @@ def data_handling(data_oggetto, data_max):
         for mese in Mesi:
             if str(mese['nome']) in str(data_oggetto):
                 data_oggetto = ''.join(filter(str.isdigit, data_oggetto))
-                data_oggetto = int(data_oggetto)
-                data_365 += mese['giorni'] + data_oggetto
+                data_365 += mese['giorni'] + int(data_oggetto)
                 break
     else:
         return True
