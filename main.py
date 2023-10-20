@@ -2,7 +2,7 @@ from scraper import *
 
 query = str(input("Inserisci il nome dell'oggetto a cui sei interessato.\n"))
 
-data_max = int(input("Di quanti giorni vuoi siano vecchi al massimo gli annunci? Se vuoi visualizzare solo quelli postati oggi, scrivi 0\n"))
+data_max = int(input("Di quanti giorni vuoi siano vecchi al massimo gli annunci? Se vuoi visualizzare solo quelli postati oggi, digita 0\n"))
 
 results_query = scrape_items_subito(query, data_max)
 

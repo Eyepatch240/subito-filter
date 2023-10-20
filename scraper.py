@@ -38,7 +38,7 @@ def scrape_html(current_page, query):
 
         html_dati = BeautifulSoup(html_text, 'lxml')
 
-        oggetti = html_dati.find_all(class_='items__item item-card item-card--small')
+        oggetti = html_dati.find_all(class_=re.compile(r'item-card'))
 
         return oggetti
 
@@ -54,19 +54,22 @@ def scrape_items_subito(query, data_max):
 
         for item in oggetti:
 
-            # Vengono saltati gli oggetti venduti
             if item.find(class_='item-sold-badge'):
                 continue
             
             data_oggetto = item.find('span', class_=re.compile(r'date'))
             
-            # Il programma salta l'oggetto corrente se privo di Data
+            # Per gli annunci privi di data, controlla che si tratti di un prodotto 'in vetrina' e se si, gli assegna 'Sponsorizzato'. 
             if data_oggetto is None:
-                continue
+                if item.find('div', class_=re.compile(r'TimeAndPlace-module_with-badge')):
+                    data_oggetto = 'Sponsorizzato'
+                else:
+                    continue
             
-            data_oggetto = data_oggetto.text.strip()
+            if not isinstance(data_oggetto, str):
+                data_oggetto = data_oggetto.text.strip()
 
-            # Viene chiamata la funzione data_handling per ogni oggetto
+            # Viene chiamata la funzione data_handling per ogni oggetto, la quale gestisce gli oggetti in base alla data massima, inserita dall'utente. ritorna True se l'oggetto va skippato.
             if data_handling(data_oggetto, data_max):
                 continue
 
@@ -82,10 +85,11 @@ def scrape_items_subito(query, data_max):
             except ValueError:
                 continue
 
-            link_oggetto = item.find('a', class_='SmallCard-module_link__hOkzY')
+            link_oggetto = item.find('a', class_=re.compile(r'link'))
             if link_oggetto:
                 link_oggetto = link_oggetto.get('href').strip()
-
+                if any(item.Link == link_oggetto for item in lista_oggetti):
+                    continue
             # Con i dati raccolti, si crea un'istanza Oggetto, che viene aggiunta alla lista
             oggetto = Oggetto(nome_oggetto, prezzo_oggetto, data_oggetto, link_oggetto)
 
@@ -110,7 +114,6 @@ def filter_results(results_query, avg_price):
 
 # Funzione che ordina gli oggetti per prezzo in ordine crescente
 def order_by_lowest(results_query):
-
     length = len(results_query)
     for i in range(length):
         min = i
@@ -129,6 +132,9 @@ def filter_by_price(results_query, price):
 def data_handling(data_oggetto, data_max):
 
     if 'Oggi' in data_oggetto or ('Ieri' in data_oggetto and data_max >= 1):
+        return False
+
+    if 'Sponsorizzato' in data_oggetto:
         return False 
     
     data_365 = 0
@@ -154,6 +160,8 @@ def data_handling(data_oggetto, data_max):
 def print_results(results_query):
     for oggetto in results_query:
         if 'Oggi' in oggetto.Data or 'Ieri' in oggetto.Data:
-            print(f'{oggetto.Nome} a {oggetto.Prezzo}€ postato {oggetto.Data} Link: {oggetto.Link}')
+            print(f'{oggetto.Nome} a {oggetto.Prezzo}€, postato {oggetto.Data} \nLink: {oggetto.Link}')
+        elif 'Sponsorizzato' in oggetto.Data:
+            print(f'{oggetto.Nome} a {oggetto.Prezzo}€, in vetrina \nLink: {oggetto.Link}')
         else:
-            print(f'{oggetto.Nome} a {oggetto.Prezzo}€ postato il {oggetto.Data} Link: {oggetto.Link}')
+            print(f'{oggetto.Nome} a {oggetto.Prezzo}€, postato il {oggetto.Data} \nLink: {oggetto.Link}')
