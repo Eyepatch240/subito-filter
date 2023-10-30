@@ -1,23 +1,49 @@
 from scraper import *
+from data_processing import *
+import sys
 
-query = str(input("Inserisci il nome dell'oggetto a cui sei interessato.\n"))
+def main():
+    print("Subito Filter")
+    query = input("inserisci il nome dell'oggetto che stai cercando\n")
+    data_max = int(input("Di quanti giorni vuoi siano vecchi al massimo gli annunci? se vuoi visualizzare solo quelli postati oggi, digita 0\n"))
 
-data_max = int(input("Di quanti giorni vuoi siano vecchi al massimo gli annunci? Se vuoi visualizzare solo quelli postati oggi, digita 0\n"))
+    while True:
+        if not scrape_items_subito(query, data_max):
+            print(f"Nessun risultato trovato per gli ultimi {data_max} giorni, inserisci una data massima diversa, -1 per riavviare lo script, -2 per fermarlo.")
+            data_max = int(input("Di quanti giorni vuoi siano vecchi al massimo gli annunci?\n"))
+            if data_max == -1:
+                main()
+            elif data_max == -2:
+                sys.exit(0)
+        else:
+            results_query = scrape_items_subito(query, data_max)
+            break 
 
-results_query = scrape_items_subito(query, data_max)
+    order_by_lowest(results_query)
 
-avg_price = average(results_query)
+    filter_results(results_query, results_query[len(results_query)//2].Prezzo)
 
-filter_results(results_query, avg_price)
+    print(f'Il prezzo medio per {query} negli ultimi {data_max} giorni è {average(results_query)}€')
 
-print(f'Il prezzo medio per {query} negli ultimi {data_max} giorni è {average(results_query)}€')
+    price = int(input("Inserisci il prezzo massimo che deve avere l'annuncio\n"))
+    
+    while True:
+        results_test = results_query.copy()
+        filter_by_price(results_test, price)
+        if not results_test:
+            choice = int(input(f"Nessun risultato trovato al prezzo selezionato, inserisci un prezzo piu' alto, -1 per riavviare lo script, -2 per fermarlo.\n"))
+            if choice == -1:
+                main()
+            elif choice == -2:
+                sys.exit(0)
+            else:
+                price = choice
+        else:
+            results_query = results_test
+            break
 
-order_by_lowest(results_query)
+    print('Ecco quello che ho trovato')
+    print_results(results_query)
 
-price = int(input("Inserisci il prezzo massimo che deve avere l'annuncio\n"))
-
-print('Ecco quello che ho trovato')
-
-filter_by_price(results_query, price)
-
-print_results(results_query)
+if __name__ == "__main__":
+    main()

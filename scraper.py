@@ -3,6 +3,8 @@ import requests
 import datetime
 import re
 
+STARTING_PAGE = 15
+
 # Ottengo la data corrente in formato 365
 data_attuale = datetime.date.today().timetuple().tm_yday
 
@@ -48,8 +50,8 @@ def scrape_items_subito(query, data_max):
     # Estrae i dati da Subito.it per la query specificata. Itera dalla 15ima pagina a salire, ritorna una lista di oggetti estratti dalle pagine.
     query = query.replace(' ', '+')
 
-    current_page = 15
-    for current_page in range(15, 0, -1):
+    current_page = STARTING_PAGE
+    for current_page in range(STARTING_PAGE, 0, -1):
         oggetti = scrape_html(current_page, query)
 
         for item in oggetti:
@@ -70,7 +72,7 @@ def scrape_items_subito(query, data_max):
                 data_oggetto = data_oggetto.text.strip()
 
             # Viene chiamata la funzione data_handling per ogni oggetto, la quale gestisce gli oggetti in base alla data massima, inserita dall'utente. ritorna True se l'oggetto va skippato.
-            if data_handling(data_oggetto, data_max):
+            if time_handling_subito(data_oggetto, data_max):
                 continue
 
             nome_oggetto = item.find('h2').string.strip()
@@ -96,40 +98,8 @@ def scrape_items_subito(query, data_max):
             lista_oggetti.append(oggetto)
     return lista_oggetti
 
-# Funzione che calcola il prezzo medio degli Oggetti 
-def average(results_query):
-
-    somma = 0
-    i = 0
-
-    for oggetto in lista_oggetti:
-        somma += oggetto.Prezzo
-        i+=1
-
-    return somma / i
-
-# Funzione che filtra tutti gli oggetti fuori mercato, o non inerenti alla ricerca (annunci da 1 euro, accessori ecc.)
-def filter_results(results_query, avg_price):
-    results_query[:] = [oggetto for oggetto in results_query if oggetto.Prezzo > avg_price/2 and oggetto.Prezzo < avg_price * 2]
-
-# Funzione che ordina gli oggetti per prezzo in ordine crescente
-def order_by_lowest(results_query):
-    length = len(results_query)
-    for i in range(length):
-        min = i
-        for j in range(i+1, length):
-            if results_query[min].Prezzo > results_query[j].Prezzo:
-                min = j
-        temp = results_query[min]
-        results_query[min] = results_query[i]
-        results_query[i] = temp
-
-# Funzione che filtra gli oggetti in base al prezzo massimo inserito dall'utente
-def filter_by_price(results_query, price):
-    results_query[:] = [oggetto for oggetto in results_query if oggetto.Prezzo <= price]
-
 # Funzione che gestisce la rilevanza a livello temporale degli annunci esaminati, chiamata da scrap_items_subito, ritorna Falso quando devono essere esaminati e raccolti, True quando devono essere saltati
-def data_handling(data_oggetto, data_max):
+def time_handling_subito(data_oggetto, data_max):
 
     if 'Oggi' in data_oggetto or ('Ieri' in data_oggetto and data_max >= 1):
         return False
