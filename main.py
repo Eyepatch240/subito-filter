@@ -2,8 +2,8 @@ from scraper import *
 from data_processing import *
 import sys
 
+print("Subito Filter")
 def main():
-    print("Subito Filter")
     query = input("inserisci il nome dell'oggetto che stai cercando\n")
     data_max = int(input("Di quanti giorni vuoi siano vecchi al massimo gli annunci? se vuoi visualizzare solo quelli postati oggi, digita 0\n"))
 
@@ -44,6 +44,12 @@ def main():
 
     print('Ecco quello che ho trovato')
     print_results(results_query)
+
+    choice = input("Vuoi fare una nuova ricerca? digita si, no altrimenti\n")
+    if choice.lower() == "si":
+        main()
+    else:
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
